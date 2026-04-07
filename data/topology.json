@@ -1,0 +1,58 @@
+{
+  "nodes": [
+    {
+      "id": "R1",
+      "label": "R1"
+    },
+    {
+      "id": "SW",
+      "label": "SW",
+      "ip": "unknown",
+      "platform": "Linux Unix"
+    },
+    {
+      "id": "R2",
+      "label": "R2",
+      "ip": "10.0.12.2",
+      "platform": "Linux Unix"
+    },
+    {
+      "id": "R3",
+      "label": "R3",
+      "ip": "10.0.23.2",
+      "platform": "Linux Unix"
+    }
+  ],
+  "edges": [
+    {
+      "source": "R1",
+      "target": "SW",
+      "local_port": "Ethernet0/0",
+      "remote_port": "Ethernet0/1"
+    },
+    {
+      "source": "R1",
+      "target": "R2",
+      "local_port": "Ethernet0/1",
+      "remote_port": "Ethernet0/0"
+    },
+    {
+      "source": "SW",
+      "target": "R2",
+      "local_port": "Ethernet0/2",
+      "remote_port": "Ethernet0/2"
+    },
+    {
+      "source": "SW",
+      "target": "R3",
+      "local_port": "Ethernet0/2",
+      "remote_port": "Ethernet0/3"
+    },
+    {
+      "source": "R2",
+      "target": "R3",
+      "local_port": "Ethernet0/1",
+      "remote_port": "Ethernet0/0"
+    }
+  ]
+}

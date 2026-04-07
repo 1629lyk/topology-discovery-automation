@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Network Topology</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #0f1117; color: #ccc; }
+    #header {
+      padding: 12px 20px; background: #1a1d27;
+      border-bottom: 1px solid #2a2d3a;
+      display: flex; align-items: center; gap: 12px;
+    }
+    #header h1 { font-size: 15px; font-weight: 500; color: #e0e0e0; flex: 1; }
+    #status { font-size: 12px; color: #888; }
+    button {
+      padding: 6px 14px; background: #2563eb; color: #fff;
+      border: none; border-radius: 6px; font-size: 12px; cursor: pointer;
+    }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #374151; cursor: not-allowed; }
+    #network { width: 100%; height: calc(100vh - 50px); }
+    #detail {
+      position: absolute; top: 62px; right: 16px;
+      background: #1a1d27; border: 1px solid #2a2d3a;
+      border-radius: 8px; padding: 14px; font-size: 13px;
+      min-width: 220px; display: none;
+    }
+    #detail h2 { font-size: 14px; font-weight: 500; color: #e0e0e0; margin-bottom: 10px; }
+    .row { color: #888; margin-bottom: 5px; }
+    .row b { color: #ccc; }
+    #close-btn {
+      float: right; background: none; border: none;
+      color: #888; cursor: pointer; font-size: 14px; padding: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <h1>Network Topology Discovery</h1>
+  <span id="status">Loading...</span>
+  <button id="disc-btn" onclick="discover()">Rediscover</button>
+</div>
+
+<div id="network"></div>
+
+<div id="detail">
+  <button id="close-btn" onclick="document.getElementById('detail').style.display='none'">✕</button>
+  <h2 id="d-name"></h2>
+  <div id="d-body"></div>
+</div>
+
+<script>
+  let network;
+
+  const nodeColors = {
+    default: { background: '#2563eb', border: '#1d4ed8', highlight: { background: '#3b82f6', border: '#2563eb' } }
+  };
+
+  function discover() {
+    const btn = document.getElementById('disc-btn');
+    btn.disabled = true;
+    document.getElementById('status').textContent = 'Discovering...';
+    fetch('/api/discover', { method: 'POST' })
+      .then(r => r.json())
+      .then(d => {
+        document.getElementById('status').textContent = `${d.nodes} nodes · ${d.edges} links`;
+        btn.disabled = false;
+        loadTopology();
+      })
+      .catch(() => {
+        document.getElementById('status').textContent = 'Discovery failed';
+        btn.disabled = false;
+      });
+  }
+
+  function loadTopology() {
+    fetch('/api/topology')
+      .then(r => r.json())
+      .then(data => {
+        const nodes = new vis.DataSet(data.nodes.map(n => ({
+          id: n.id,
+          label: n.label,
+          color: nodeColors.default,
+          font: { color: '#e0e0e0', size: 13 },
+          shape: 'box',
+          margin: 10,
+          borderWidth: 1
+        })));
+
+        const edges = new vis.DataSet(data.edges.map((e, i) => ({
+          id: i,
+          from: e.source,
+          to: e.target,
+          label: `${e.local_port}\n${e.remote_port}`,
+          color: { color: '#374151', highlight: '#6b7280' },
+          font: { color: '#6b7280', size: 10, align: 'middle' },
+          smooth: { type: 'curvedCW', roundness: 0.1 }
+        })));
+
+        if (network) network.destroy();
+        network = new vis.Network(
+          document.getElementById('network'),
+          { nodes, edges },
+          {
+            physics: {
+              stabilization: true,
+              barnesHut: { gravitationalConstant: -4000, springLength: 180 }
+            },
+            interaction: { hover: true, tooltipDelay: 200 }
+          }
+        );
+
+        document.getElementById('status').textContent =
+          `${data.nodes.length} nodes · ${data.edges.length} links`;
+
+        network.on('click', params => {
+          if (!params.nodes.length) {
+            document.getElementById('detail').style.display = 'none';
+            return;
+          }
+          const nodeId = params.nodes[0];
+          fetch(`/api/nodes/${nodeId}`)
+            .then(r => r.json())
+            .then(n => {
+              document.getElementById('d-name').textContent = n.id;
+              document.getElementById('d-body').innerHTML = `
+                <div class="row"><b>IP:</b> ${n.ip || 'n/a'}</div>
+                <div class="row"><b>Platform:</b> ${n.platform || 'n/a'}</div>
+                <div class="row"><b>Neighbors:</b> ${n.neighbors.join(', ') || 'none'}</div>
+              `;
+              document.getElementById('detail').style.display = 'block';
+            });
+        });
+      })
+      .catch(() => {
+        document.getElementById('status').textContent = 'No topology — click Rediscover';
+      });
+  }
+
+  loadTopology();
+</script>
+</body>
+</html>
