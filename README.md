@@ -362,15 +362,7 @@ Device settings: cisco_ios 10.0.12.2:22
 
 ---
 
-### 4. GigabitEthernet vs Ethernet interfaces
-
-**Problem:** Initial configs referenced `GigabitEthernet0/0` but CML free tier IOSv routers use `Ethernet0/x` interfaces. Commands failed to apply.
-
-**Fix:** Replaced all interface references with `Ethernet0/x` throughout configs and code.
-
----
-
-### 5. device_type mismatch
+### 4. device_type mismatch
 
 **Problem:** Tested `cisco_xe` as device type in Netmiko for IOS XE 17.16.1a  connection succeeded but command parsing behaved unexpectedly.
 
