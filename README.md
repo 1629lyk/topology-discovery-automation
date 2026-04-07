@@ -384,5 +384,5 @@ Device settings: cisco_ios 10.0.12.2:22
 ## Author
 
 Lakhan Kumar Sunilkumar
-MS Computer Science, UC Riverside | CCNA 200-301
+MS Computer Science, UC Riverside | CCNA 200-301 |
 lakumar0609@gmail.com | (951) 512-3416
